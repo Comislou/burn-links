@@ -45,6 +45,13 @@ jobs:
           sed -e "s/__WORKER_NAME__/${{ secrets.WORKER_NAME }}/g" \
             -e "s/__KV_NAMESPACE_ID__/${{ secrets.CF_KV_NAMESPACE_ID }}/g" \
             wrangler.toml.example > wrangler.toml
+          if [[ -n "${{ secrets.CUSTOM_DOMAIN }}" ]]; then
+            echo "Setting custom domain to ${{ secrets.CUSTOM_DOMAIN }}"
+            echo -e "\n[[routes]]\n \
+              pattern = \"${{ secrets.CUSTOM_DOMAIN }}\"\n \
+              custom_domain = true" \
+              >> wrangler.toml
+          fi
 
       - name: Deploy to Cloudflare
         run: npm run deploy
