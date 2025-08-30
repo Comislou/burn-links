@@ -8,7 +8,7 @@ id = "__KV_NAMESPACE_ID__"
 
 [vars]
 DEFAULT_TTL_SECONDS = 43200
-HOME_ICON = ""
-TITLE = "阅后即焚"
-BACKGROUND = ""
-BACKGROUND_VERTICAL = ""
+HOME_ICON = "https://cdn.illusionlie.com/img/iL/ico/iL-circle.ico"
+TITLE = "Burn Links"
+BACKGROUND = "https://api.illusionlie.com/randomBackground"
+BACKGROUND_VERTICAL = "https://api.illusionlie.com/randomBackground?type=vertical"
