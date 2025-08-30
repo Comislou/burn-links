@@ -1,6 +1,7 @@
 import { Router } from 'itty-router';
 import { customAlphabet } from 'nanoid';
 import * as pageBuilder from './htmlBuilder.js';
+import { ResponseBuilder } from './features/response.js';
 
 // 使用不易混淆的字符集
 const nanoid = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 8);
@@ -8,13 +9,15 @@ const nanoid = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 8);
 const router = Router();
 
 // 首页
-router.get('/', () => {
+router.get('/', (request, env) => {
+	const response = new ResponseBuilder(request, env);
 	const html = pageBuilder.getHomepage();
-	return new Response(html, { headers: { 'Content-Type': 'text/html;charset=UTF-8' } });
+	return response.html(html);
 });
 
 // 处理创建请求
 router.post('/', async (request, env) => {
+  const response = new ResponseBuilder(request, env);
   const url = new URL(request.url);
 	const formData = await request.formData();
 	const targetUrl = formData.get('url');
@@ -25,13 +28,13 @@ router.post('/', async (request, env) => {
 	try {
     parsedTargetUrl = new URL(targetUrl);
     if (!['http:', 'https:'].includes(parsedTargetUrl.protocol)) {
-      return errorResponse('只支持 HTTP/HTTPS 协议的 URL。', 400);
+      return response.error('只支持 HTTP/HTTPS 协议的 URL。', 400);
     }
     if (parsedTargetUrl.hostname === url.hostname) {
-      return errorResponse('不允许创建指向本站的循环链接。', 400);
+      return response.error('不允许创建指向本站的循环链接。', 400);
     }
 	} catch (e) {
-    return errorResponse('提交的 URL 格式不正确，请返回重试。', 400);
+    return response.error('提交的 URL 格式不正确，请返回重试。', 400);
 	}
 
   let maxVisits;
@@ -41,13 +44,13 @@ router.post('/', async (request, env) => {
 	} else {
     // 使用正则表达式测试输入是否为纯数字
     if (!/^\d+$/.test(visitsInput)) {
-      return errorResponse('访问次数必须是 1 到 99 之间的数字，或留空不填。', 400);
+      return response.error('访问次数必须是 1 到 99 之间的数字，或留空不填。', 400);
     }
 
 		const parsedVisits = parseInt(visitsInput, 10);
 		// 校验：必须是数字，且在 1-99 范围内
 		if (isNaN(parsedVisits) || parsedVisits < 1 || parsedVisits > 99) {
-			return errorResponse('访问次数必须是 1 到 99 之间的数字，或留空不填。', 400);
+			return response.error('访问次数必须是 1 到 99 之间的数字，或留空不填。', 400);
 		}
 		maxVisits = parsedVisits;
 	}
@@ -74,16 +77,17 @@ router.post('/', async (request, env) => {
 	const shortUrl = `${url.origin}/${id}`;
 	const html = pageBuilder.getSuccessPage(shortUrl);
 
-	return new Response(html, { headers: { 'Content-Type': 'text/html;charset=UTF-8' } });
+	return response.html(html);
 });
 
 // 处理跳转请求
-router.get('/:id', async ({ params }, env) => {
+router.get('/:id', async ({ params, ...request }, env) => {
+  const response = new ResponseBuilder(request, env);
 	const id = params.id;
 	const dataStr = await env.KV.get(id);
 
 	if (!dataStr) {
-		return errorResponse("此链接不存在或已被销毁。", 404);
+		return response.error("此链接不存在或已被销毁。", 404);
 	}
 
 	let data;
@@ -92,13 +96,13 @@ router.get('/:id', async ({ params }, env) => {
   } catch (e) {
     // 数据损坏
     await env.KV.delete(id); 
-    return errorResponse("此链接数据已损坏。", 410);
+    return response.error("此链接数据已损坏。", 410);
   }
 
 	if (data.remainingVisits !== -1) {
 		if (data.remainingVisits <= 0) {
 			await env.KV.delete(id);
-			return errorResponse("此链接的访问次数已用尽。", 410);
+			return response.error("此链接的访问次数已用尽。", 410);
 		}
 
 		if (data.remainingVisits === 1) {
@@ -109,17 +113,14 @@ router.get('/:id', async ({ params }, env) => {
 		}
 	}
 
-	return Response.redirect(data.url, 302);
+	return response.redirect(data.url, 302);
 });
 
 // 404 页面
-router.all('*', () => new Response('404, Not Found.', { status: 404 }));
-
-// 错误响应函数
-function errorResponse(message, status = 404) {
-    const html = pageBuilder.getErrorPage(message);
-    return new Response(html, { status, headers: { 'Content-Type': 'text/html;charset=UTF-8' } });
-}
+router.all('*', (request, env) => {
+	const response = new ResponseBuilder(request, env);
+	return response.html('404, Not Found.', 404);
+});
 
 export default {
   async fetch(request, env) {
