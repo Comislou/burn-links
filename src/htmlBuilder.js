@@ -1,0 +1,228 @@
+import { env } from "cloudflare:workers";
+
+// 预处理环境变量
+const HOME_ICON = env.HOME_ICON || "https://workers.cloudflare.com/resources/logo/logo.svg";
+const TITLE = env.HOME_TITLE || "阅后即焚";
+const BACKGROUND = env.BACKGROUND ? `url(${env.BACKGROUND}?placeholder=${Math.random()})` : "none"; // 确保每次加载都刷新图片
+const BACKGROUND_VERTICAL = env.BACKGROUND_VERTICAL ? `url(${env.BACKGROUND_VERTICAL}?placeholder=${Math.random()})` : "none";
+
+// 样式表
+const styles = `
+<style type="text/css">
+    html, body {width: 100%; height: 100%; margin: 0; padding: 0; overflow-x: hidden;}
+    body {
+      background-color: #ffffff; color: #000000; 
+      font-family:-apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue",Arial, sans-serif; 
+      font-size: 16px; line-height: 1.7em; -webkit-font-smoothing: antialiased; 
+      text-align: center; background-size: cover; background-position: center center; 
+      background-repeat: no-repeat; background-attachment: fixed; backdrop-filter: blur(3px);
+    }
+    h1 { text-align: center; font-weight:700; margin: 16px 0; font-size: 32px; color:#000000; line-height: 1.25;}
+    p {font-size: 20px; font-weight: 400; margin: 8px 0;}
+    a { color: #2c7cb0; text-decoration: none; transition: color 0.15s ease; }
+    a:hover{color: #f4a15d}
+    .container {
+      max-width: 700px; min-height: 450px; margin: 50px auto;
+      background: #eff1f26a; padding: 25px; border-radius: 18px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); backdrop-filter: blur(4px);
+    }
+    input[type="url"], input[type="number"], input[type="text"] {
+      padding: 15px; border: 3px solid #ccc;
+      border-radius: 5px; margin-bottom: 20px; margin-top: 10px;
+      box-sizing: border-box;
+    }
+    input.url-input {
+      width: 80%;
+    }
+    input.visits-input {
+      width: 150px;
+    }
+    .settings-row {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 2rem;
+      margin-top: 20px;
+    }
+    .setting-item {
+      text-align: center;
+    }
+    .copy-button {
+      background-color: #2c7cb0; color: white; padding: 15px 25px;
+      border: none; border-radius: 80px; cursor: pointer; font-size: 16px;
+      transition: background-color 0.3s ease; margin-top: 20px;
+    }
+    .copy-button:hover { background-color: #f4a15d; }
+    .top-banner {
+      display: flex; position: fixed; top: 0; left: 0; width: 100%;
+      padding: 12px 24px; background-color: rgba(255, 255, 255, 0.74);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); z-index: 1000; opacity: 0.8;
+    }
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .brand a { display: flex; align-items: center; gap: 16px; text-decoration: none; color: inherit; }
+    .top-banner-logo { width: 32px; height: 32px; }
+    .top-banner-title { margin: 0; font-size: 1.5em; font-weight: bold; }
+    .expire-toggle { margin: 15px 0; text-align: center; }
+    .expire-toggle label { display: inline-block; position: relative; cursor: pointer; }
+    .expire-toggle input[type="checkbox"] { display: none; }
+    .slider { position: relative; display: inline-block; width: 60px; height: 30px; background-color: #5cb85c; border-radius: 15px; transition: all 0.3s ease; }
+    .slider:before { content: ""; position: absolute; left: 4px; top: 4px; width: 22px; height: 22px; background-color: white; border-radius: 50%; transition: all 0.3s ease; }
+    input:checked + .slider { background-color: #ff4d4d; }
+    input:checked + .slider:before { transform: translateX(30px); }
+    .gorgeous-blue-gradient {
+      font-size: 32px; font-weight: bold; background: linear-gradient( to right, #007bff, #17a2b8, #0056b3, #66ccff, #007bff );
+      background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: blueGradientFlow 5s linear infinite;
+    }
+    @keyframes blueGradientFlow { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
+    @media screen and (max-width: 700px) {
+      .container, body { backdrop-filter: blur(1px); }
+    }
+</style>
+<script>
+  (function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile/i.test(navigator.userAgent) || window.innerWidth <= 700;
+    const backgroundUrl = isMobile ? '${BACKGROUND_VERTICAL}' : '${BACKGROUND}';
+    document.body.style.backgroundImage = backgroundUrl;
+  })})();
+</script>
+`;
+
+// 头部横幅 (静态)
+const topBanner = `
+<div class="top-banner">
+  <div class="brand">
+      <a href="/">
+          <img src="${HOME_ICON}" alt="logo" class="top-banner-logo">
+          <h2 class="top-banner-title">${TITLE}</h2>
+      </a>
+  </div>
+</div>
+`;
+
+// 基础页面布局函数 (核心)
+// 接收页面标题和主要内容HTML，返回一个完整的HTML文档
+function getLayout(pageTitle, contentHtml) {
+  return `
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Burn After Reading Short Link Service">
+  <link rel="icon" href="${HOME_ICON}">
+  <title>${pageTitle} | ${TITLE}</title>
+  ${styles}
+</head>
+<body>
+  ${topBanner}
+  <table width="100%" height="100%" cellpadding="20">
+    <tr>
+      <td align="center" valign="middle">
+        <div class="container">
+          ${contentHtml}
+        </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+// 首页内容
+export function getHomepage() {
+  const content = `
+<h1 id="check_title"><span class="gorgeous-blue-gradient">阅后即焚</span> 短链接</h1>
+<form method="POST" action="/" style="display: flex; flex-direction: column; align-items: center;">
+    <p>输入一个希望跳转的URL</p>
+    <input type="url" name="url" class="url-input" placeholder="https://example.com" required>
+
+    <div class="settings-row">
+        <div class="setting-item">
+            <p>最大访问次数</p>
+            <input type="number" name="visits" min="1" max="99" class="visits-input" placeholder="1-99次, 留空不限">
+        </div>
+
+        <div class="setting-item">
+            <p>过期设置</p>
+            <div class="expire-toggle">
+                <label>
+                    <input type="checkbox" name="no_expire" id="expireToggle">
+                    <span class="slider"></span>
+                </label>
+                <p id="label_status" style="font-size: 14px; margin-top: 8px;">12小时后销毁</p>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="copy-button">生成链接</button>
+</form>
+<script>
+  const toggle = document.getElementById('expireToggle');
+  const statusLabel = document.getElementById('label_status');
+  toggle.addEventListener('change', function() {
+    if (this.checked) {
+      statusLabel.textContent = '永不销毁';
+      statusLabel.style.color = '#ff4d4d';
+    } else {
+      statusLabel.textContent = '12小时销毁';
+      statusLabel.style.color = '#5cb85c';
+    }
+  });
+  // 初始化状态
+  statusLabel.style.color = '#5cb85c';
+</script>
+`;
+  return getLayout('创建链接', content);
+}
+
+// 成功页面内容
+export function getSuccessPage(shortUrl) {
+  const content = `
+<h1>创建成功!</h1>
+<p>你的短链接是:</p>
+<input type="text" id="shortUrl" value="${shortUrl}" readonly>
+<button id="copyButton" class="copy-button">复制</button>
+<p style="margin-top: 20px;"><a href="/">创建另一个</a></p>
+<script>
+  const copyButton = document.getElementById('copyButton');
+  copyButton.addEventListener('click', () => {
+    const urlInput = document.getElementById('shortUrl');
+    urlInput.select();
+    urlInput.setSelectionRange(0, 99999); // For mobile devices
+    navigator.clipboard.writeText(urlInput.value).then(() => {
+      copyButton.textContent = '已复制!';
+      copyButton.style.backgroundColor = '#5cb85c';
+      setTimeout(() => {
+        copyButton.textContent = '复制';
+        copyButton.style.backgroundColor = '#2c7cb0';
+      }, 2000);
+    }).catch(err => {
+      alert('复制失败: ' + err);
+    });
+  });
+</script>
+`;
+  return getLayout('创建成功', content);
+}
+
+// 错误页面内容
+export function getErrorPage(message) {
+  const safeMessage = encodeHTML(message);
+  const content = `
+<h1 style="color: #d9534f;">操作失败</h1>
+<p style="font-size: 22px;">${safeMessage}</p>
+<a href="/" class="copy-button" style="text-decoration: none; display: inline-block; margin-top: 20px;">返回首页</a>
+`;
+  return getLayout('错误', content);
+}
+
+function encodeHTML(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+}

@@ -1,0 +1,14 @@
+name = "__WORKER_NAME__"
+main = "src/index.js"
+compatibility_date = "2025-08-28"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "__KV_NAMESPACE_ID__"
+
+[vars]
+DEFAULT_TTL_SECONDS = 43200
+HOME_ICON = ""
+TITLE = "阅后即焚"
+BACKGROUND = ""
+BACKGROUND_VERTICAL = ""
