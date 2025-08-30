@@ -67,6 +67,9 @@
     *   **`WORKER_NAME`**:
         *   **值**: 你希望为 Worker 设置的名称。
 
+    *   **`CUSTOM_DOMAIN`**:
+        *   **值**: 为 Worker 设置的自定义域。
+
 > **注意**: 注意是设置到 Secrets 而不是 Variables。
 
 ### 步骤 5: 运行部署 Action
