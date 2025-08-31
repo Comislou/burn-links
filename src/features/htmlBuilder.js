@@ -111,6 +111,7 @@ function getLayout(pageTitle, contentHtml) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="description" content="Burn After Reading Short Link Service">
+  <meta name="robots" content="noindex, nofollow, noarchive">
   <link rel="icon" href="${HOME_ICON}">
   <title>${pageTitle} | ${TITLE}</title>
   ${styles}

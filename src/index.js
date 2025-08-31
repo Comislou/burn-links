@@ -1,12 +1,24 @@
 import { Router } from 'itty-router';
 import { customAlphabet } from 'nanoid';
-import * as pageBuilder from './htmlBuilder.js';
+import * as pageBuilder from './features/htmlBuilder.js';
 import { ResponseBuilder } from './features/response.js';
+import { blockBots } from './features/botBlocker.js';
 
 // 使用不易混淆的字符集
 const nanoid = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 8);
 
 const router = Router();
+
+// 阻断爬虫
+router.all('*', blockBots);
+
+// robots.txt
+router.get('/robots.txt', () => {
+  const robotsTxt = `User-agent: *\nDisallow: /`;
+  return new Response(robotsTxt, {
+    headers: { 'Content-Type': 'text/plain' },
+  });
+});
 
 // 首页
 router.get('/', (request, env) => {
@@ -19,6 +31,21 @@ router.get('/', (request, env) => {
 router.post('/', async (request, env) => {
   const response = new ResponseBuilder(request, env);
   const url = new URL(request.url);
+	const referer = request.headers.get('Referer');
+
+	// 如果 Referer 头存在，它必须来自同源
+	if (referer) {
+		try {
+			const refererOrigin = new URL(referer).origin;
+			if (refererOrigin !== url.origin) {
+				return response.error('不允许跨站请求。', 403);
+			}
+		} catch (err) {
+			// 如果 Referer 格式不正确，也视为无效请求
+			return response.error('无效的来源页面。', 400);
+		}
+	}
+
 	const formData = await request.formData();
 	const targetUrl = formData.get('url');
 	const visitsInput = formData.get('visits');
