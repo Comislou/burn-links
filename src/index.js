@@ -31,6 +31,21 @@ router.get('/', (request, env) => {
 router.post('/', async (request, env) => {
   const response = new ResponseBuilder(request, env);
   const url = new URL(request.url);
+	const referer = request.headers.get('Referer');
+
+	// 如果 Referer 头存在，它必须来自同源
+	if (referer) {
+		try {
+			const refererOrigin = new URL(referer).origin;
+			if (refererOrigin !== url.origin) {
+				return response.error('不允许跨站请求。', 403);
+			}
+		} catch (err) {
+			// 如果 Referer 格式不正确，也视为无效请求
+			return response.error('无效的来源页面。', 400);
+		}
+	}
+
 	const formData = await request.formData();
 	const targetUrl = formData.get('url');
 	const visitsInput = formData.get('visits');
