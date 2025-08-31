@@ -1,4 +1,4 @@
-import * as pageBuilder from '../htmlBuilder.js';
+import * as pageBuilder from './htmlBuilder.js';
 
 export class ResponseBuilder {
   constructor(request, env) {
@@ -62,6 +62,7 @@ export class ResponseBuilder {
       "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
       "Referrer-Policy": "no-referrer",
       "Cross-Origin-Resource-Policy": "same-origin",
+      "X-Robots-Tag": "noindex, nofollow, noarchive",
       ...customHeaders,
     });
     return headers;

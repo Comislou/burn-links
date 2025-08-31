@@ -1,12 +1,24 @@
 import { Router } from 'itty-router';
 import { customAlphabet } from 'nanoid';
-import * as pageBuilder from './htmlBuilder.js';
+import * as pageBuilder from './features/htmlBuilder.js';
 import { ResponseBuilder } from './features/response.js';
+import { blockBots } from './features/botBlocker.js';
 
 // 使用不易混淆的字符集
 const nanoid = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 8);
 
 const router = Router();
+
+// 阻断爬虫
+router.all('*', blockBots);
+
+// robots.txt
+router.get('/robots.txt', () => {
+  const robotsTxt = `User-agent: *\nDisallow: /`;
+  return new Response(robotsTxt, {
+    headers: { 'Content-Type': 'text/plain' },
+  });
+});
 
 // 首页
 router.get('/', (request, env) => {
