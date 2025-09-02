@@ -2,13 +2,23 @@ name = "__WORKER_NAME__"
 main = "src/index.js"
 compatibility_date = "2025-08-28"
 
+workers_dev = true
+# 关闭遥测
+send_metrics = false
+
+# KV 命名空间
 [[kv_namespaces]]
-binding = "KV"
+binding = "KV"  # 不要修改此项
 id = "__KV_NAMESPACE_ID__"
 
 [vars]
+# 默认过期时间（秒），12小时 = 43200秒
 DEFAULT_TTL_SECONDS = 43200
+# 站点图标，留空则使用 Cloudflare 默认图标
 HOME_ICON = ""
+# 站点主标题
 TITLE = "阅后即焚"
+# PC 端背景图
 BACKGROUND = ""
+# 移动端背景图
 BACKGROUND_VERTICAL = ""
