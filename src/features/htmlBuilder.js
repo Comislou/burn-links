@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 
 // 预处理环境变量
 const HOME_ICON = env.HOME_ICON || "https://workers.cloudflare.com/resources/logo/logo.svg";
-const TITLE = env.HOME_TITLE || "阅后即焚";
+const TITLE = env.TITLE || "阅后即焚";
 const BACKGROUND = env.BACKGROUND ? `url(${env.BACKGROUND}?placeholder=${Math.random()})` : "none"; // 确保每次加载都刷新图片
 const BACKGROUND_VERTICAL = env.BACKGROUND_VERTICAL ? `url(${env.BACKGROUND_VERTICAL}?placeholder=${Math.random()})` : "none";
 const TURNSTILE_SITE_KEY = env.TURNSTILE_SITE_KEY; // 获取 Site Key
