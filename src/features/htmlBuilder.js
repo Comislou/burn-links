@@ -160,7 +160,7 @@ export function getHomepage() {
     </div>
 
     <!-- Turnstile 小部件容器 -->
-    <div class="cf-turnstile" data-sitekey="${TURNSTILE_SITE_KEY}" data-theme="light" style="margin-top: 20px;"></div>
+    <div class="cf-turnstile" data-sitekey="${TURNSTILE_SITE_KEY}" data-size="flexible" style="margin-top: 20px;"></div>
 
     <button type="submit" class="copy-button">生成链接</button>
 </form>
