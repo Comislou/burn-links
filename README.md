@@ -47,6 +47,16 @@
 
 > **警告**: API 令牌非常敏感，请勿泄露给任何人或提交到代码仓库中。
 
+### 步骤 4: 创建 Cloudflare Turnstile （可选）
+
+人机验证是防止滥用的重要手段。
+
+1. 登录到 [Cloudflare 仪表板](https://dash.cloudflare.com/)。
+2. 在左侧导航栏中，选择 **Turnstile**。
+3. 点击 **Add widget** 按钮。并正确添加你的主机名。
+4. 点击 **Create** 后，你会看到 Site Key 和 Secret Key。复制他们，并稍后添加到机密中。
+
+
 ### 步骤 4: 在 GitHub 中配置 Secrets
 
 这是最关键的一步，我们将把从 Cloudflare 获取的凭证安全地提供给 GitHub Actions。
@@ -55,20 +65,26 @@
 2. 点击 **Settings** -> **Secrets and variables** -> **Actions**。
 3. 点击 **New repository secret** 按钮，依次添加以下三个 Secret：
 
-    *   **`CLOUDFLARE_API_TOKEN`**:
-        *   **值**: 你在 **步骤 3** 中创建并复制的 API 令牌。
+    *   **`CF_API_TOKEN`**:
+        *   **值**: 在 **步骤 3** 中创建并复制的 API 令牌。
 
-    *   **`CLOUDFLARE_ACCOUNT_ID`**:
+    *   **`CF_ACCOUNT_ID`**:
         *   **值**: 不需要设置，Action会自动获取（当然你想设置也可以）。
 
     *   **`CF_KV_NAMESPACE_ID`**:
-        *   **值**: 你在 **步骤 2** 中创建并复制的 KV 命名空间 ID。
+        *   **值**: 在 **步骤 2** 中创建并复制的 KV 命名空间 ID。
 
     *   **`WORKER_NAME`**:
         *   **值**: 你希望为 Worker 设置的名称。
 
     *   **`CUSTOM_DOMAIN`**:
-        *   **值**: 为 Worker 设置的自定义域。
+        *   **值**: 为 Worker 设置的自定义域。（可选）
+    
+    *   **`CF_TURNSTILE_SITE_KEY`**:
+        *   **值**: Turnstile Site Key。（可选）
+
+    *   **`CF_TURNSTILE_SECRET_KEY`**:
+        *   **值**: Turnstile Secret Key。（可选）
 
 > **注意**: 注意是设置到 Secrets 而不是 Variables。
 
