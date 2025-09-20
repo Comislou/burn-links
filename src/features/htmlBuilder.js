@@ -5,6 +5,7 @@ const HOME_ICON = env.HOME_ICON || "https://workers.cloudflare.com/resources/log
 const TITLE = env.HOME_TITLE || "阅后即焚";
 const BACKGROUND = env.BACKGROUND ? `url(${env.BACKGROUND}?placeholder=${Math.random()})` : "none"; // 确保每次加载都刷新图片
 const BACKGROUND_VERTICAL = env.BACKGROUND_VERTICAL ? `url(${env.BACKGROUND_VERTICAL}?placeholder=${Math.random()})` : "none";
+const TURNSTILE_SITE_KEY = env.TURNSTILE_SITE_KEY; // 获取 Site Key
 
 // 样式表
 const styles = `
@@ -103,7 +104,7 @@ const topBanner = `
 
 // 基础页面布局函数 (核心)
 // 接收页面标题和主要内容HTML，返回一个完整的HTML文档
-function getLayout(pageTitle, contentHtml) {
+function getLayout(pageTitle, contentHtml, extraHeadHtml = '') {
   return `
 <!DOCTYPE HTML>
 <html lang="zh-CN">
@@ -115,6 +116,7 @@ function getLayout(pageTitle, contentHtml) {
   <link rel="icon" href="${HOME_ICON}">
   <title>${pageTitle} | ${TITLE}</title>
   ${styles}
+  ${extraHeadHtml}
 </head>
 <body>
   ${topBanner}
@@ -157,6 +159,9 @@ export function getHomepage() {
         </div>
     </div>
 
+    <!-- Turnstile 小部件容器 -->
+    <div class="cf-turnstile" data-sitekey="${TURNSTILE_SITE_KEY}" data-theme="light" style="margin-top: 20px;"></div>
+
     <button type="submit" class="copy-button">生成链接</button>
 </form>
 <script>
@@ -175,7 +180,9 @@ export function getHomepage() {
   statusLabel.style.color = '#5cb85c';
 </script>
 `;
-  return getLayout('创建链接', content);
+  // 为首页添加 Turnstile 的脚本
+  const turnstileScript = `<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>`;
+  return getLayout('创建链接', content, turnstileScript);
 }
 
 // 成功页面内容

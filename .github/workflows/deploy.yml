@@ -11,6 +11,30 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+      
+      - name: Validate Secrets
+        run: |
+          if [ -z "${{ secrets.CF_ACCOUNT_ID }}" ]; then
+            echo "::error::Secret CF_ACCOUNT_ID is not set. Please add it to your repository secrets."
+            exit 1
+          fi
+          if [ -z "${{ secrets.CF_API_TOKEN }}" ]; then
+            echo "::error::Secret CF_API_TOKEN is not set. Please add it to your repository secrets."
+            exit 1
+          fi
+          if [ -z "${{ secrets.CF_KV_NAMESPACE_ID }}" ]; then
+            echo "::error::Secret CF_KV_NAMESPACE_ID is not set. Please add it to your repository secrets."
+            exit 1
+          fi
+          if [ -z "${{ secrets.CF_TURNSTILE_SITE_KEY }}" ]; then
+            echo "::error::Secret CF_TURNSTILE_SITE_KEY is not set. Please add it to your repository secrets."
+            exit 1
+          fi
+          if [ -z "${{ secrets.CF_TURNSTILE_SECRET_KEY }}" ]; then
+            echo "::error::Secret CF_TURNSTILE_SECRET_KEY is not set. Please add it to your repository secrets."
+            exit 1
+          fi
+          echo "✅ All necessary secrets are set."
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -44,6 +68,8 @@ jobs:
         run: |
           sed -e "s/__WORKER_NAME__/${{ secrets.WORKER_NAME }}/g" \
             -e "s/__KV_NAMESPACE_ID__/${{ secrets.CF_KV_NAMESPACE_ID }}/g" \
+            -e "s/__TURNSTILE_SITE_KEY__/${{ secrets.CF_TURNSTILE_SITE_KEY }}/g" \
+            -e "s/__TURNSTILE_SECRET_KEY__/${{ secrets.CF_TURNSTILE_SECRET_KEY }}/g" \
             wrangler.toml.example > wrangler.toml
           if [[ -n "${{ secrets.CUSTOM_DOMAIN }}" ]]; then
             echo "Setting custom domain to ${{ secrets.CUSTOM_DOMAIN }}"
