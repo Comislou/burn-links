@@ -58,7 +58,7 @@ jobs:
           echo 'account_id='$ACCOUNT_ID >> $GITHUB_OUTPUT
 
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
 
       - name: Generate wrangler.toml from template
         run: |
