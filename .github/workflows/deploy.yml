@@ -14,10 +14,6 @@ jobs:
       
       - name: Validate Secrets
         run: |
-          if [ -z "${{ secrets.CF_ACCOUNT_ID }}" ]; then
-            echo "::error::Secret CF_ACCOUNT_ID is not set. Please add it to your repository secrets."
-            exit 1
-          fi
           if [ -z "${{ secrets.CF_API_TOKEN }}" ]; then
             echo "::error::Secret CF_API_TOKEN is not set. Please add it to your repository secrets."
             exit 1
