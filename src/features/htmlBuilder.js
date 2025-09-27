@@ -86,7 +86,6 @@ const styles = `
       ::placeholder { font-size: 12px; }
     }
 </style>
-// 在浏览器端动态加载背景图
 <script>
   (function() {
   document.addEventListener('DOMContentLoaded', function() {
