@@ -33,6 +33,35 @@ router.post('/', async (request, env) => {
   const url = new URL(request.url);
 	const referer = request.headers.get('Referer');
 
+  const formData = await request.formData();
+	const token = formData.get('cf-turnstile-response');
+	const ip = request.headers.get('CF-Connecting-IP');
+
+	if (!token) {
+		return response.error('人机验证失败，请刷新页面重试。', 400);
+	}
+
+	try {
+		const turnstileResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				secret: env.TURNSTILE_SECRET_KEY,
+				response: token,
+				remoteip: ip,
+			}),
+		});
+
+		const outcome = await turnstileResponse.json();
+		if (!outcome.success) {
+			console.error('Turnstile verification failed:', outcome['error-codes']?.join(', '));
+			return response.error('人机验证失败，请刷新页面重试。', 403);
+		}
+	} catch (err) {
+		console.error('Error verifying Turnstile:', e);
+		return response.error('无法验证请求来源，请稍后重试。', 500);
+	}
+
 	// 如果 Referer 头存在，它必须来自同源
 	if (referer) {
 		try {
@@ -46,7 +75,6 @@ router.post('/', async (request, env) => {
 		}
 	}
 
-	const formData = await request.formData();
 	const targetUrl = formData.get('url');
 	const visitsInput = formData.get('visits');
 	const noExpire = formData.get('no_expire') === 'on';
@@ -60,7 +88,7 @@ router.post('/', async (request, env) => {
     if (parsedTargetUrl.hostname === url.hostname) {
       return response.error('不允许创建指向本站的循环链接。', 400);
     }
-	} catch (e) {
+	} catch (err) {
     return response.error('提交的 URL 格式不正确，请返回重试。', 400);
 	}
 

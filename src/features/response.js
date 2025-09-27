@@ -12,9 +12,10 @@ export class ResponseBuilder {
    */
   _buildCsp() {
     const unsafeInline = "'unsafe-inline'";
+    const turnstileHost = "challenges.cloudflare.com";
     
     // 从环境变量中提取需要加入白名单的域名
-    const allowedImageSources = new Set(['self', 'data:']);
+    const allowedImageSources = new Set(["'self'", "data:", "about:"]);
     
     const externalUrls = [
       this.env.HOME_ICON,
@@ -39,7 +40,9 @@ export class ResponseBuilder {
       // htmlBuilder.js 中包含内联样式和脚本，因此需要 'unsafe-inline'
       // 在更严格的应用中，应考虑使用 none 或 hash
       `style-src 'self' ${unsafeInline}`,
-      `script-src 'self' ${unsafeInline}`,
+      `script-src 'self' ${unsafeInline} ${turnstileHost}`,
+      // 允许 Turnstile 的 iframe
+      `frame-src ${self} ${turnstileHost}`,
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
