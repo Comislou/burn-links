@@ -15,7 +15,7 @@ export class ResponseBuilder {
     const turnstileHost = "challenges.cloudflare.com";
     
     // 从环境变量中提取需要加入白名单的域名
-    const allowedImageSources = new Set(["'self'", "'data:'"]);
+    const allowedImageSources = new Set(["'self'", "data:", "about:"]);
     
     const externalUrls = [
       this.env.HOME_ICON,
