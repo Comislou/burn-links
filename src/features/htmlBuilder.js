@@ -2,9 +2,9 @@ import { env } from "cloudflare:workers";
 
 // 预处理环境变量
 const HOME_ICON = env.HOME_ICON || "https://workers.cloudflare.com/resources/logo/logo.svg";
-const TITLE = env.HOME_TITLE || "阅后即焚";
-const BACKGROUND = env.BACKGROUND ? `url(${env.BACKGROUND}?placeholder=${Math.random()})` : "none"; // 确保每次加载都刷新图片
-const BACKGROUND_VERTICAL = env.BACKGROUND_VERTICAL ? `url(${env.BACKGROUND_VERTICAL}?placeholder=${Math.random()})` : "none";
+const TITLE = env.TITLE || "阅后即焚";
+const BACKGROUND = env.BACKGROUND
+const BACKGROUND_VERTICAL = env.BACKGROUND_VERTICAL
 
 // 样式表
 const styles = `
@@ -70,21 +70,35 @@ const styles = `
     input:checked + .slider { background-color: #ff4d4d; }
     input:checked + .slider:before { transform: translateX(30px); }
     .gorgeous-blue-gradient {
-      font-size: 32px; font-weight: bold; background: linear-gradient( to right, #007bff, #17a2b8, #0056b3, #66ccff, #007bff );
+      font-weight: bold; background: linear-gradient( to right, #007bff, #17a2b8, #0056b3, #66ccff, #007bff );
       background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
       animation: blueGradientFlow 5s linear infinite;
     }
     @keyframes blueGradientFlow { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
+    .form-row { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     @media screen and (max-width: 700px) {
       .container, body { backdrop-filter: blur(1px); }
+      .top-banner { display: none; }
+      #check_title { font-size: 28px; }
+      .form-row p { font-size: 16px; }
+      input.url-input, input.visits-input { width: 90%; }
+      ::placeholder { font-size: 12px; }
     }
 </style>
+// 在浏览器端动态加载背景图
 <script>
   (function() {
   document.addEventListener('DOMContentLoaded', function() {
     const isMobile = /Mobi|Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile/i.test(navigator.userAgent) || window.innerWidth <= 700;
-    const backgroundUrl = isMobile ? '${BACKGROUND_VERTICAL}' : '${BACKGROUND}';
-    document.body.style.backgroundImage = backgroundUrl;
+    let backgroundUrl;
+    try {
+      backgroundUrl = new URL(isMobile ? "${BACKGROUND_VERTICAL}" : "${BACKGROUND}");
+      backgroundUrl.searchParams.append('t', Date.now());  // 添加时间戳以强制浏览器重新加载图片
+    } catch (err) {
+      console.error('Failed to parse background URL:', err);
+      backgroundUrl = "none";
+    }
+    document.body.style.backgroundImage = \`url("\${backgroundUrl.href}")\`;
   })})();
 </script>
 `;
@@ -135,7 +149,7 @@ function getLayout(pageTitle, contentHtml) {
 export function getHomepage() {
   const content = `
 <h1 id="check_title"><span class="gorgeous-blue-gradient">阅后即焚</span> 短链接</h1>
-<form method="POST" action="/" style="display: flex; flex-direction: column; align-items: center;">
+<form method="POST" action="/" class="form-row">
     <p>输入一个希望跳转的URL</p>
     <input type="url" name="url" class="url-input" placeholder="https://example.com" required>
 
